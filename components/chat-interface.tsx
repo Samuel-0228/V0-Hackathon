@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, MessageSquare } from 'lucide-react';
-import { supabase, type Message, type Outfit } from '@/lib/supabase';
+import { hasSupabaseEnv, supabase, type Message, type Outfit } from '@/lib/supabase';
 import OutfitCard from '@/components/outfit-card';
 
 interface ChatInterfaceProps {
@@ -21,6 +21,10 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
 
   // Fetch outfits for suggestions
   useEffect(() => {
+    if (!hasSupabaseEnv) {
+      return;
+    }
+
     const fetchOutfits = async () => {
       const { data, error } = await supabase
         .from('outfits')
@@ -42,6 +46,10 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
 
   // Load messages if conversation exists
   useEffect(() => {
+    if (!hasSupabaseEnv) {
+      return;
+    }
+
     if (currentConversationId) {
       const fetchMessages = async () => {
         const { data, error } = await supabase
@@ -60,6 +68,11 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
   }, [currentConversationId]);
 
   const handleSendMessage = async () => {
+    if (!hasSupabaseEnv) {
+      console.error('Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.');
+      return;
+    }
+
     if (!inputValue.trim()) return;
 
     // Create conversation if it doesn't exist
@@ -170,6 +183,12 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-6 pt-24">
         <div className="max-w-4xl mx-auto space-y-6">
+          {!hasSupabaseEnv && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900">
+              Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your environment variables.
+            </div>
+          )}
+
           {messages.length === 0 && !loading && (
             <div className="text-center py-16">
               <MessageSquare className="mx-auto mb-4 text-gray-300" size={48} />
